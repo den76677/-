@@ -1,0 +1,89 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Vehicle {
+private:
+    string brand;
+    string licensePlate;
+    int mileage;
+    string status;
+
+public:
+    // Конструкторы
+    Vehicle() : brand("Не указана"), licensePlate("А000АА000"), mileage(0), status("в гараже") {}
+    
+    Vehicle(string b, string lp, int m, string s) : brand(b), licensePlate(lp) {
+        mileage = (m >= 0) ? m : 0;
+        status = (s == "на линии" || s == "в гараже" || s == "в ремонте") ? s : "в гараже";
+    }
+
+    // Деструктор
+    ~Vehicle() {
+        cout << "Авто " << licensePlate << " удалено\n";
+    }
+
+    // Геттеры
+    string getBrand() { return brand; }
+    string getLicensePlate() { return licensePlate; }
+    int getMileage() { return mileage; }
+    string getStatus() { return status; }
+
+    // Сеттеры с валидацией
+    void setBrand(string b) { if (!b.empty()) brand = b; }
+    void setLicensePlate(string lp) { if (!lp.empty()) licensePlate = lp; }
+    
+    void setMileage(int m) { 
+        if (m >= mileage) mileage = m; 
+        else cout << "Пробег нельзя уменьшить!\n";
+    }
+    
+    void setStatus(string newStatus) {
+        if (newStatus != "на линии" && newStatus != "в гараже" && newStatus != "в ремонте") {
+            cout << "Некорректный статус\n";
+            return;
+        }
+        if ((status == "в ремонте" && newStatus == "на линии") || 
+            (status == "на линии" && newStatus == "в ремонте")) {
+            cout << "Недопустимый переход статуса\n";
+            return;
+        }
+        status = newStatus;
+    }
+
+    // Основные методы
+    void addMileage(int km) {
+        if (km <= 0) cout << "Км должны быть > 0\n";
+        else if (status != "на линии") cout << "Машина не на линии\n";
+        else mileage += km;
+    }
+
+    void printInfo() {
+        cout << "\n=== " << brand << " (" << licensePlate << ") ===\n"
+             << "Пробег: " << mileage << " км\n"
+             << "Статус: " << status << "\n";
+    }
+};
+
+int main() {
+    setlocale(0, "Russian");
+    
+    // Тестирование
+    Vehicle v1;  // по умолчанию
+    Vehicle v2("ГАЗель", "В123АА", 50000, "в гараже");
+    
+    v1.printInfo();
+    v2.printInfo();
+    
+    // Проверка методов
+    v2.setStatus("на линии");
+    v2.addMileage(100);
+    v2.setMileage(60000);  // валидация: пробег можно только увеличивать
+    v2.setStatus("в ремонте");  // недопустимо
+    v2.setStatus("в гараже");
+    v2.setStatus("в ремонте");  // теперь можно
+    
+    v2.printInfo();
+    
+    return 0;
+}
