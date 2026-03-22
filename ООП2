@@ -1,0 +1,141 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// ========== Базовый класс ==========
+class Vehicle {
+protected:
+    string brand, licensePlate;
+    int mileage;
+    string status;
+
+public:
+    Vehicle(string b, string lp, int m, string s) : brand(b), licensePlate(lp) {
+        mileage = (m >= 0) ? m : 0;
+        status = (s == "на линии" || s == "в гараже") ? s : "в гараже";
+    }
+
+    virtual ~Vehicle() {
+        cout << "ТС " << licensePlate << " удалено\n";
+    }
+
+    // Обычный метод (общий для всех)
+    void addMileage(int km) {
+        if (km > 0 && status == "на линии") {
+            mileage += km;
+            cout << "Пробег +" << km << " км\n";
+        }
+    }
+
+    // Чисто виртуальные методы
+    virtual double calcTripCost(double km) = 0;
+    virtual bool needsMaintenance() = 0;
+    virtual string getType() = 0;
+
+    // Виртуальный метод вывода
+    virtual void printInfo() {
+        cout << "Тип: " << getType() << "\n"
+             << "Марка: " << brand << "\n"
+             << "Номер: " << licensePlate << "\n"
+             << "Пробег: " << mileage << " км\n"
+             << "Статус: " << status << "\n";
+    }
+};
+
+// ========== Легковой автомобиль ==========
+class PassengerCar : public Vehicle {
+private:
+    int seats;
+    string comfortClass;
+
+public:
+    PassengerCar(string b, string lp, int m, string s, int st, string comf)
+        : Vehicle(b, lp, m, s), seats(st), comfortClass(comf) {}
+
+    double calcTripCost(double km) override {
+        double rate = (comfortClass == "бизнес") ? 40 : (comfortClass == "комфорт" ? 25 : 15);
+        return km * rate;
+    }
+
+    bool needsMaintenance() override {
+        return mileage > 0 && mileage % 15000 < 1000;
+    }
+
+    string getType() override { return "Легковой"; }
+
+    void printInfo() override {
+        Vehicle::printInfo();
+        cout << "Мест: " << seats << ", Класс: " << comfortClass << "\n";
+        cout << "------------------------\n";
+    }
+};
+
+// ========== Грузовик ==========
+class Truck : public Vehicle {
+private:
+    double capacity;  // грузоподъёмность в тоннах
+    double volume;    // объём кузова
+
+public:
+    Truck(string b, string lp, int m, string s, double cap, double vol)
+        : Vehicle(b, lp, m, s), capacity(cap), volume(vol) {}
+
+    double calcTripCost(double km) override {
+        return km * (30 + capacity * 5);
+    }
+
+    bool needsMaintenance() override {
+        return mileage > 0 && mileage % 10000 < 500;
+    }
+
+    string getType() override { return "Грузовой"; }
+
+    void printInfo() override {
+        Vehicle::printInfo();
+        cout << "Грузоподъёмность: " << capacity << " т\n";
+        cout << "------------------------\n";
+    }
+};
+
+// ========== Главная функция ==========
+int main() {
+    setlocale(0, "Russian");
+    
+    // Массив указателей на базовый класс
+    Vehicle* fleet[4];
+    
+    fleet[0] = new PassengerCar("Toyota", "А123ВС", 14500, "на линии", 4, "комфорт");
+    fleet[1] = new Truck("Kamaz", "В456ТК", 120000, "в гараже", 15, 12);
+    fleet[2] = new PassengerCar("Lada", "М789УК", 28000, "в ремонте", 5, "эконом");
+    fleet[3] = new Truck("Volvo", "Х012ХХ", 85000, "на линии", 20, 18);
+    
+    // Вывод информации (полиморфизм)
+    cout << "=== ИНФОРМАЦИЯ О ТС ===\n";
+    for (int i = 0; i < 4; i++) {
+        fleet[i]->printInfo();
+    }
+    
+    // Расчёт стоимости поездки (полиморфизм)
+    cout << "\n=== СТОИМОСТЬ ПОЕЗДКИ 500 КМ ===\n";
+    for (int i = 0; i < 4; i++) {
+        cout << fleet[i]->getType() << " " << fleet[i]->getBrand() 
+             << ": " << fleet[i]->calcTripCost(500) << " руб.\n";
+    }
+    
+    // Проверка ТО (полиморфизм)
+    cout << "\n=== НЕОБХОДИМОСТЬ ТО ===\n";
+    for (int i = 0; i < 4; i++) {
+        cout << fleet[i]->getBrand() << ": ";
+        if (fleet[i]->needsMaintenance())
+            cout << "Требуется ТО\n";
+        else
+            cout << "ТО не требуется\n";
+    }
+    
+    // Освобождение памяти
+    for (int i = 0; i < 4; i++) {
+        delete fleet[i];
+    }
+    
+    return 0;
+}
